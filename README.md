@@ -53,21 +53,21 @@ The final masked BERT model demonstrated a dramatic improvement over the Bag-of-
 **Figure 1: Confusion Matrix for the Bag-of-Words Baseline Model**
 *(This matrix highlights the baseline's failure to correctly classify "High" impact headlines.)*
 
-![BoW Confusion Matrix](images/bow_confusion_matrix.png)
+![BoW Confusion Matrix](Picture1.png)
 
 <br>
 
 **Figure 2: Per-class F1-score Comparison: BERT vs. Bag-of-Words**
 *(This chart clearly illustrates the superior performance of the BERT model across all classes.)*
 
-![F1 Score Comparison](images/f1_score_comparison.png)
+![F1 Score Comparison](Picture2.png)
 
 <br>
 
 **Figure 3: Training Loss Curve for the Final Masked BERT Model**
 *(This curve shows the model's successful convergence during training.)*
 
-![BERT Loss Curve](images/bert_masked_loss_curve.png)
+![BERT Loss Curve](Picture3.png)
 
 ### 5. Analysis and Conclusion
 The Bag-of-Words baseline demonstrated limited capability in classifying rare High-impact headlines due to its reliance on explicit keyword matching, achieving a mere 0.06 F1-score for that class. Conversely, the masked BERT model exhibited superior performance, effectively leveraging contextual information beyond mere keyword occurrences. The trigger-word masking strategy proved crucial in preventing the model from simply memorizing keywords, forcing it to generalize and achieve a robust F1-macro score of 0.981.
