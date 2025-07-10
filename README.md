@@ -1,60 +1,104 @@
-This repository contains a Jupyter Notebook (BRETA.ipynb) that walks through the process of building a sophisticated text classifier. The goal is to determine the "impact level" (Low, Medium, or High) of a news headline.
-The project demonstrates a complete workflow, starting from a simple keyword-based labeling system and progressively building up to a robust, context-aware BERT model. It highlights common challenges in NLP projects, such as class imbalance and model overfitting on trivial keywords, and provides effective solutions.
-The Narrative: A Journey in 5 Phases
-The notebook tells a story of iterative model improvement:
-Phase 1: Keyword-Based Labeling: We begin without a pre-labeled dataset. Instead, we create our own labels using a dictionary of "trigger words." This pragmatic approach quickly gets us a labeled dataset but introduces significant class imbalance and a heavy reliance on simple keywords.
-Phase 2: The Baseline - Bag-of-Words (BoW): To establish a performance baseline, a classic BoW model with a Logistic Regression classifier is trained. It performs reasonably well on the majority class but fails catastrophically on the minority "High" impact class, achieving an F1-score of just 0.06. This clearly demonstrates the need for a more advanced approach.
-Phase 3: Initial BERT Model (Imbalanced Data): Our first attempt with bert-base-uncased shows a massive improvement over the BoW baseline. However, while overall accuracy is high (99.2%), the F1-score for the minority class is still lagging, and the model is likely just memorizing the trigger words.
-Phase 4: Tackling Imbalance with BERT: We address the class imbalance by creating a balanced dataset (through oversampling minority classes). Training BERT on this new dataset yields near-perfect results (0.999 F1-score), showing the model can now effectively distinguish between all three classes.
-Phase 5: Forcing Generalization with Masking: To ensure the model isn't just cheating by memorizing the trigger words, a clever data augmentation technique is introduced. During training, a random 50% of the trigger words in the input text are replaced with [MASK]. This forces the model to learn the surrounding context to make its prediction, leading to a more robust and generalizable classifier. This final model achieves an excellent F1-score of 0.981.
-Key Features
-Pragmatic Data Labeling: Demonstrates how to create a labeled dataset from scratch using a keyword-based system.
-Class Imbalance Handling: Solves a critical machine learning problem using oversampling.
-Advanced Model Training: Fine-tunes a bert-base-uncased model for sequence classification using the Hugging Face transformers and datasets libraries.
-Robustness via Masking: Implements a trigger-word masking strategy to improve model generalization and prevent overfitting on simple cues.
-Baseline Comparison: Provides a clear comparison against a scikit-learn Bag-of-Words model to highlight the power of transformers.
-Comprehensive Evaluation: Uses classification reports and confusion matrices to analyze model performance across different stages.
-Final Results
-The final model, trained on a balanced and masked dataset, demonstrates strong performance and a good understanding of context beyond simple keywords.
-Model Performance: BERT vs. Bag-of-Words
-The bar chart clearly shows the superiority of the fine-tuned BERT model, especially for the under-represented "High" impact class where the BoW model failed.
-Final Masked-BERT Model Performance
-Class	Precision	Recall	F1-Score	Support
-0 (Low)	0.989	0.976	0.982	619
-1 (Med)	0.964	0.980	0.972	604
-2 (High)	0.990	0.986	0.988	577
-Macro Avg	0.981	0.981	0.981	1800
-Training Loss
-The training curve for the final model shows a steady decrease in loss, indicating successful learning.
-Technologies Used
-PyTorch
-Hugging Face Transformers: For the BERT model and training infrastructure.
-Hugging Face Datasets: For efficient data handling and preprocessing.
-Scikit-Learn: For the baseline model, metrics, and data splitting.
-Pandas: For data manipulation.
-Seaborn & Matplotlib: For data visualization.
-How to Run
-Clone the Repository
-Generated bash
-git clone <repository-url>
-cd <repository-directory>
-Use code with caution.
-Bash
-Set up Environment
-It is recommended to use a virtual environment.
-Generated bash
-python -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-Use code with caution.
-Bash
-Install Dependencies
-The core dependencies can be installed by running the first code cell in the notebook.
-Generated python
-!pip install -q transformers datasets scikit-learn
-Use code with caution.
-Python
-Note: The notebook was created in a Google Colab environment with access to a GPU (Tesla T4).
-Run the Notebook
-Open BRETA.ipynb in a Jupyter environment (like Jupyter Lab or VS Code) and run the cells sequentially.
-A Note on TrainingArguments
-The notebook contains a TypeError in cells 5 and 19 related to the evaluation_strategy argument. This is a common issue when using a version of the transformers library where this argument was deprecated or renamed. The notebook correctly resolves this by removing the argument in the subsequent cells (8 and 20). If you are using a very recent version of transformers, you might need to use evaluation_strategy="epoch" and remove the tokenizer argument from the Trainer in favor of a DataCollator. The provided code is self-correcting and should run as-is.
+# Impact-Level Classification of News Headlines with BERT
+
+This repository contains a Jupyter Notebook that demonstrates a complete workflow for building a sophisticated text classifier to determine the "impact level" (Low, Medium, or High) of a news headline.
+
+The project begins by pragmatically creating a labeled dataset from keywords, then establishes a baseline with a traditional Bag-of-Words (BoW) model. It culminates in fine-tuning a robust, context-aware BERT model, using a novel trigger-word masking technique to prevent overfitting and improve generalization.
+
+---
+
+### Table of Contents
+1.  [Introduction](#1-introduction)
+2.  [Data and Methodology](#2-data-and-methodology)
+3.  [Model Implementation](#3-model-implementation)
+4.  [Experimental Results](#4-experimental-results)
+5.  [Analysis and Conclusion](#5-analysis-and-conclusion)
+6.  [Technologies Used](#6-technologies-used)
+7.  [How to Run](#7-how-to-run)
+
+---
+
+### 1. Introduction
+Efficient prioritisation of news articles based on impact levels is critical in news aggregation and information dissemination. This study investigates the classification of news headlines into three distinct categories—Low, Medium, and High impact—using advanced machine learning methods. We compare the performance of a traditional Bag-of-Words (BoW) approach to a state-of-the-art BERT model, fine-tuned with a novel trigger-word masking technique designed to encourage contextual understanding rather than keyword memorisation.
+
+### 2. Data and Methodology
+**Dataset**
+
+The AG-News dataset, comprising a random subset of 10,000 news headlines, was used. Headlines were categorised based on predefined keywords associated with impact levels. To address a significant class imbalance, the dataset was balanced to **3,000 entries** per impact level through upsampling of minority classes.
+
+**Preprocessing**
+
+Two distinct preprocessing pipelines were used:
+*   **For the BERT model**, a trigger-word masking strategy was applied during tokenisation. This technique randomly masked 50% of predefined trigger words with the `[MASK]` token, forcing the model to learn from the surrounding context.
+*   **For the Bag-of-Words baseline**, stop-words were removed before constructing a fixed vocabulary of 600 words (300 most common and 300 least common).
+
+### 3. Model Implementation
+**Bag-of-Words Baseline**
+
+A baseline model using the fixed 600-word vocabulary was implemented. A multinomial Logistic Regression model with L2 regularisation (C=1, max_iter=1000) was used.
+
+**BERT Model**
+
+The pre-trained `bert-base-uncased` model was fine-tuned for two epochs using a batch size of 16 on a Tesla T4 GPU. The trigger-word masking strategy was integrated directly into the tokenisation function to enhance the model's generalisation capabilities.
+
+### 4. Experimental Results
+The final masked BERT model demonstrated a dramatic improvement over the Bag-of-Words baseline, especially in identifying the rare "High" impact class.
+
+| Model           | Accuracy | F1-Low | F1-Medium | F1-High | F1-macro |
+| :-------------- | :------- | :----- | :-------- | :------ | :------- |
+| Bag-of-Words    | 0.913    | 0.954  | 0.806     | 0.059   | 0.606    |
+| **BERT (masked)**   | **0.981**    | **0.982**  | **0.972**     | **0.988**   | **0.981**    |
+
+<br>
+
+**Figure 1: Confusion Matrix for the Bag-of-Words Baseline Model**
+*(This matrix highlights the baseline's failure to correctly classify "High" impact headlines.)*
+
+![BoW Confusion Matrix](images/bow_confusion_matrix.png)
+
+<br>
+
+**Figure 2: Per-class F1-score Comparison: BERT vs. Bag-of-Words**
+*(This chart clearly illustrates the superior performance of the BERT model across all classes.)*
+
+![F1 Score Comparison](images/f1_score_comparison.png)
+
+<br>
+
+**Figure 3: Training Loss Curve for the Final Masked BERT Model**
+*(This curve shows the model's successful convergence during training.)*
+
+![BERT Loss Curve](images/bert_masked_loss_curve.png)
+
+### 5. Analysis and Conclusion
+The Bag-of-Words baseline demonstrated limited capability in classifying rare High-impact headlines due to its reliance on explicit keyword matching, achieving a mere 0.06 F1-score for that class. Conversely, the masked BERT model exhibited superior performance, effectively leveraging contextual information beyond mere keyword occurrences. The trigger-word masking strategy proved crucial in preventing the model from simply memorizing keywords, forcing it to generalize and achieve a robust F1-macro score of 0.981.
+
+The masked BERT model significantly outperformed the traditional Bag-of-Words approach, underscoring the effectiveness of contextual embedding techniques in news classification tasks. Future research should explore human-labelled datasets, enhanced masking techniques, and considerations for real-time deployment.
+
+### 6. Technologies Used
+*   **PyTorch**
+*   **Hugging Face Transformers**: For the BERT model and training infrastructure.
+*   **Hugging Face Datasets**: For efficient data handling and preprocessing.
+*   **Scikit-Learn**: For the baseline model, metrics, and data splitting.
+*   **Pandas**: For data manipulation.
+*   **Seaborn & Matplotlib**: For data visualization.
+
+### 7. How to Run
+1.  **Clone the Repository:**
+    ```bash
+    git clone <your-repository-url>
+    cd <repository-directory>
+    ```
+2.  **Set up Environment:**
+    It is highly recommended to run this notebook in an environment with a GPU. Google Colab is an excellent choice.
+    ```bash
+    # It is recommended to use a virtual environment
+    python -m venv venv
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    ```
+3.  **Install Dependencies:**
+    The core dependencies can be installed by running the first code cell in the `BRETA.ipynb` notebook.
+    ```python
+    !pip install -q transformers datasets scikit-learn
+    ```
+4.  **Run the Notebook:**
+    Open `BRETA.ipynb` in a Jupyter environment (like JupyterLab, VS Code, or Google Colab) and run the cells sequentially to reproduce the results.
